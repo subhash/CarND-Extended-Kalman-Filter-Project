@@ -14,6 +14,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   VectorXd rmse(4);
   rmse << 0, 0, 0, 0;
   if (estimations.size() != ground_truth.size() || estimations.size()<=0){
+    std::cout << "Error in calculating RMSE " << std::endl;
     return rmse;
   }
   for (int i=0; i<estimations.size(); i++){
@@ -27,8 +28,57 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 }
 
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
-  /**
-  TODO:
-    * Calculate a Jacobian here.
-  */
+  MatrixXd Hj(3,4);
+  float px = x_state(0);
+  float py = x_state(1);
+  float vx = x_state(2);
+  float vy = x_state(3);
+  float c1 = px*px + py*py;
+//  if(c1 < 0 && c1 > -0.0001) c1 = -0.0001;
+//  if(c1 > 0 && c1 < 0.0001) c1 = 0.0001;
+//  if(fabs(c1) < 0.0001) {
+//    Hj.setZero();
+//    return Hj;
+//  }
+  if (fabs(c1) < 0.0001){
+        std::cout << "CalculateJacobian () - Error - Division by Zero" << std::endl;
+        return Hj;
+    }
+  float c2 = sqrt(c1);
+  float c3 = c1 * c2;
+  float n1 = vx*py - vy*px;
+  float n2 = vy*px - vx*py;
+  Hj << px/c2, py/c2, 0, 0,
+        -py/c1, px/c1, 0, 0,
+        py*n1/c3, px*n2/c3, px/c2, py/c2;
+  return Hj;
+}
+
+VectorXd Tools::CalculateStateMeasurement(const VectorXd& x_state) {
+  VectorXd measurement(3);
+  float px = x_state(0);
+  float py = x_state(1);
+  float vx = x_state(2);
+  float vy = x_state(3);
+  float rho = sqrt(px*px + py*py);
+//  if(rho < 0 && rho > -0.0001) rho = -0.0001;
+//  if(rho > 0 && rho < 0.0001) rho = 0.0001;
+//  if(px < 0 && px > -0.0001) px = -0.0001;
+//  if(px > 0 && px < 0.0001) px = 0.0001;
+//  if(fabs(rho) < 0.0001 || fabs(px) < 0.0001) {
+//    measurement.setZero();
+//    return measurement;
+//  }
+  float phi = atan2(py,px);
+  float rho_dot;
+  if (fabs(rho) < 0.0001) {
+      rho_dot = 0;
+    } else {
+      rho_dot = (px*vx+py*vy)/rho;
+    }
+  float pi = 3.14;
+  while(phi > pi) phi -= 2*pi;
+  while(phi < -pi) phi += 2*pi;
+  measurement << rho, phi, rho_dot;
+  return measurement;
 }

@@ -138,6 +138,8 @@ int main(int argc, char* argv[]) {
     // frame)
     fusionEKF.ProcessMeasurement(measurement_pack_list[k]);
 
+    //cout << "Ground truth: " << gt_pack_list[k].gt_values_(0) << "\t" << gt_pack_list[k].gt_values_(1) << "\t" << gt_pack_list[k].gt_values_(2) << "\t" << gt_pack_list[k].gt_values_(3) << "\n";
+
     // output the estimation
     out_file_ << fusionEKF.ekf_.x_(0) << "\t";
     out_file_ << fusionEKF.ekf_.x_(1) << "\t";
