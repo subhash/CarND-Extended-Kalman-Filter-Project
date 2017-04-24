@@ -34,16 +34,10 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   float vx = x_state(2);
   float vy = x_state(3);
   float c1 = px*px + py*py;
-//  if(c1 < 0 && c1 > -0.0001) c1 = -0.0001;
-//  if(c1 > 0 && c1 < 0.0001) c1 = 0.0001;
-//  if(fabs(c1) < 0.0001) {
-//    Hj.setZero();
-//    return Hj;
-//  }
-  if (fabs(c1) < 0.0001){
-        std::cout << "CalculateJacobian () - Error - Division by Zero" << std::endl;
-        return Hj;
-    }
+  if(fabs(c1) < 0.0001) {
+    Hj.setZero();
+    return Hj;
+  }
   float c2 = sqrt(c1);
   float c3 = c1 * c2;
   float n1 = vx*py - vy*px;
@@ -61,21 +55,12 @@ VectorXd Tools::CalculateStateMeasurement(const VectorXd& x_state) {
   float vx = x_state(2);
   float vy = x_state(3);
   float rho = sqrt(px*px + py*py);
-//  if(rho < 0 && rho > -0.0001) rho = -0.0001;
-//  if(rho > 0 && rho < 0.0001) rho = 0.0001;
-//  if(px < 0 && px > -0.0001) px = -0.0001;
-//  if(px > 0 && px < 0.0001) px = 0.0001;
-//  if(fabs(rho) < 0.0001 || fabs(px) < 0.0001) {
-//    measurement.setZero();
-//    return measurement;
-//  }
+  if(fabs(rho) < 0.0001 || fabs(px) < 0.0001) {
+    measurement.setZero();
+    return measurement;
+  }
   float phi = atan2(py,px);
-  float rho_dot;
-  if (fabs(rho) < 0.0001) {
-      rho_dot = 0;
-    } else {
-      rho_dot = (px*vx+py*vy)/rho;
-    }
+  float rho_dot = (px*vx+py*vy)/rho;
   float pi = 3.14;
   while(phi > pi) phi -= 2*pi;
   while(phi < -pi) phi += 2*pi;

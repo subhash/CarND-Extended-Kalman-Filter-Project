@@ -69,7 +69,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       * Remember: you'll need to convert radar from polar to cartesian coordinates.
     */
     // first measurement
-    //cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
     ekf_.x_ << 1, 1, 0, 0;
 
@@ -84,8 +83,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float y = measurement_pack.raw_measurements_[1];
       ekf_.x_ << x, y, 0, 0;
     }
-
-    cout << "Init: "<< ekf_.x_(0) << " " << ekf_.x_(1)<< " " << ekf_.x_(2)<< " " << ekf_.x_(3) << endl;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
@@ -105,7 +102,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
 
   float noise_ax = 9.0, noise_ay = 9.0;
-  float dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000;
+  float dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
   float dt2 = dt*dt;
   previous_timestamp_ = measurement_pack.timestamp_;
   MatrixXd a(2,2), G(4,2);
@@ -117,20 +114,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
        0, dt;
   ekf_.Q_ = G*a*G.transpose();
 
-  float dt_2 = dt   * dt;
-  float dt_3 = dt_2 * dt;
-  float dt_4 = dt_3 * dt;
-  ekf_.Q_ = MatrixXd(4, 4);
-  ekf_.Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
-             0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
-             dt_3 / 2 * noise_ax, 0, dt_2*noise_ax, 0,
-             0, dt_3 / 2 * noise_ay, 0, dt_2*noise_ay;
-
-
   ekf_.F_(0,2) = dt;
   ekf_.F_(1,3) = dt;
   ekf_.Predict();
-  cout << "Pred: "<< ekf_.x_(0) << " " << ekf_.x_(1)<< " " << ekf_.x_(2)<< " " << ekf_.x_(3) << endl;
+
   /*****************************************************************************
    *  Update
    ****************************************************************************/
@@ -147,9 +134,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
     if(!ekf_.H_.isZero()){
       ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-      cout << "RDAR: "<< ekf_.x_(0) << " " << ekf_.x_(1)<< " " << ekf_.x_(2)<< " " << ekf_.x_(3) << endl;
     } else {
-      cout << "Skip: "<< ekf_.x_(0) << " " << ekf_.x_(1)<< " " << ekf_.x_(2)<< " " << ekf_.x_(3) << endl;
+      cout << "Skipping measurement to avoid error: "<< measurement_pack.raw_measurements_ << endl;
     }
   } else {
     ekf_.R_ = R_laser_;
@@ -157,10 +143,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.H_ << 1, 0, 0, 0,
                0, 1, 0, 0;
     ekf_.Update(measurement_pack.raw_measurements_);
-    cout << "LDAR: "<< ekf_.x_(0) << " " << ekf_.x_(1)<< " " << ekf_.x_(2)<< " " << ekf_.x_(3) << endl;
   }
 
-  // print the output
-  //cout << "x_ = " << ekf_.x_ << endl;
-  //cout << "P_ = " << ekf_.P_ << endl;
 }

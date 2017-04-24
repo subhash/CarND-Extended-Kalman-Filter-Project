@@ -44,7 +44,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   Tools tools;
   VectorXd hx = tools.CalculateStateMeasurement(x_);
   if (hx.isZero()){
-    std::cout << "Measurement zero" << std::endl;
+    std::cout << "Skipping measurement conversion to avoid error" << x_ << std::endl;
     return;
   }
   VectorXd y = z - hx;
