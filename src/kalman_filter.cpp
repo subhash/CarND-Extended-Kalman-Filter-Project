@@ -1,5 +1,6 @@
 #include "kalman_filter.h"
 #include "tools.h"
+#include "math.h"
 #include <iostream>
 
 
@@ -28,16 +29,21 @@ void KalmanFilter::Predict() {
   P_ = F_*P_*F_.transpose() + Q_;
 }
 
-void KalmanFilter::Update(const VectorXd &z) {
-  VectorXd y = z - H_*x_;
-
-  MatrixXd S = H_*P_*H_.transpose() + R_;
-  MatrixXd K = P_*H_.transpose()*S.inverse();
-  long x_size = x_.size();
+void KalmanFilter::UpdateState(const VectorXd &y) {
+  MatrixXd PHt = P_*H_.transpose();
+  MatrixXd S = H_*PHt + R_;
+  MatrixXd K = PHt*S.inverse();
+  const long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
 
   x_ = x_ + K*y;
   P_ = (I - K*H_) * P_;
+}
+
+void KalmanFilter::Update(const VectorXd &z) {
+  VectorXd y = z - H_*x_;
+
+  UpdateState(y);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -48,15 +54,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     return;
   }
   VectorXd y = z - hx;
-  float pi = 3.14;
-  while(y[1] > pi) y[1] -= 2*pi;
-  while(y[1] < -pi) y[1] += 2*pi;
+  y[1] = atan2(sin(y[1]), cos(y[1]));
 
-  MatrixXd S = H_*P_*H_.transpose() + R_;
-  MatrixXd K = P_*H_.transpose()*S.inverse();
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-
-  x_ = x_ + K*y;
-  P_ = (I - K*H_) * P_;
+  UpdateState(y);
 }
