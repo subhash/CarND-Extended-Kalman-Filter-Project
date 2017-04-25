@@ -61,9 +61,6 @@ VectorXd Tools::CalculateStateMeasurement(const VectorXd& x_state) {
   }
   float phi = atan2(py,px);
   float rho_dot = (px*vx+py*vy)/rho;
-  float pi = 3.14;
-  while(phi > pi) phi -= 2*pi;
-  while(phi < -pi) phi += 2*pi;
   measurement << rho, phi, rho_dot;
   return measurement;
 }

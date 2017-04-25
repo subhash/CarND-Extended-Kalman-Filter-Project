@@ -84,6 +84,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       ekf_.x_ << x, y, 0, 0;
     }
 
+    previous_timestamp_ = measurement_pack.timestamp_;
+
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -105,14 +107,23 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   float dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
   float dt2 = dt*dt;
   previous_timestamp_ = measurement_pack.timestamp_;
-  MatrixXd a(2,2), G(4,2);
-  a << noise_ax, 0,
-       0, noise_ay;
-  G << dt2/2, 0,
-       0, dt2/2,
-       dt, 0,
-       0, dt;
-  ekf_.Q_ = G*a*G.transpose();
+//  MatrixXd a(2,2), G(4,2);
+//  a << noise_ax, 0,
+//       0, noise_ay;
+//  G << dt2/2, 0,
+//       0, dt2/2,
+//       dt, 0,
+//       0, dt;
+//  ekf_.Q_ = G*a*G.transpose();
+
+  float dt_2 = dt   * dt;
+  float dt_3 = dt_2 * dt;
+  float dt_4 = dt_3 * dt;
+  ekf_.Q_ = MatrixXd(4, 4);
+  ekf_.Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
+             0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
+             dt_3 / 2 * noise_ax, 0, dt_2*noise_ax, 0,
+             0, dt_3 / 2 * noise_ay, 0, dt_2*noise_ay;
 
   ekf_.F_(0,2) = dt;
   ekf_.F_(1,3) = dt;
